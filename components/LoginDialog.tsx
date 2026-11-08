@@ -16,7 +16,7 @@ import {
   InputGroupInput,
 } from '@/components/tailgrids/core/input-group'
 import { EyeDisabled, Keyboard } from '@tailgrids/icons'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 type LoginDialogProps = {
   isOpen?: boolean
@@ -24,13 +24,11 @@ type LoginDialogProps = {
 
 export default function LoginDialog({ isOpen = true }: LoginDialogProps) {
   const router = useRouter()
-  const userInputRef = useRef<HTMLInputElement>(null)
-  const passInputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleLogin = () => {
-    const userDom = userInputRef.current
-    const passDom = passInputRef.current
+    const userDom = document.getElementById('user') as HTMLInputElement | null
+    const passDom = document.getElementById('pass') as HTMLInputElement | null
     if (!userDom || !passDom) return
 
     const user = userDom.value.trim()
@@ -80,14 +78,23 @@ export default function LoginDialog({ isOpen = true }: LoginDialogProps) {
           <InputGroupAddon align='inline-start' className='px-2 text-xs'>
             <Keyboard />
           </InputGroupAddon>
-          <InputGroupInput ref={userInputRef} id='user' placeholder='user | admin | manager' className='py-1 text-xs' />
+          <InputGroupInput
+            id='user'
+            placeholder='user | admin | manager'
+            className='py-1 text-xs'
+          />
           <InputGroupAddon align='inline-end' className='px-2 text-xs'>@company.com</InputGroupAddon>
         </InputGroup>
         <InputGroup className='mt-2'>
           <InputGroupAddon align='inline-start' className='px-2 text-xs'>
             <EyeDisabled />
           </InputGroupAddon>
-          <InputGroupInput ref={passInputRef} id='pass' type='password' placeholder='pass' className='py-1 text-xs' />
+          <InputGroupInput
+            id='pass'
+            type='password'
+            placeholder='pass'
+            className='py-1 text-xs'
+          />
         </InputGroup>
       </DialogBody>
       <DialogFooter className='pt-2'>

@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-const formatDisplay = (value) => {
+type Operator = '+' | '-' | '×' | '÷';
+type UnaryOperation = 'sqrt' | 'percent' | 'reciprocal' | 'sign';
+type MemoryAction = 'MC' | 'MR' | 'M+' | 'M-';
+
+const memoryActions: MemoryAction[] = ['MC', 'MR', 'M+', 'M-'];
+
+const formatDisplay = (value: string) => {
   const text = String(value);
   if (text === 'Error' || text.includes('e')) return text;
   const [integer, decimal] = text.split('.');
@@ -12,8 +18,8 @@ const formatDisplay = (value) => {
 
 export default function App() {
   const [display, setDisplay] = useState('0');
-  const [storedValue, setStoredValue] = useState(null);
-  const [operator, setOperator] = useState(null);
+  const [storedValue, setStoredValue] = useState<number | null>(null);
+  const [operator, setOperator] = useState<Operator | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [memory, setMemory] = useState(0);
   const [hasResult, setHasResult] = useState(false);
@@ -26,30 +32,34 @@ export default function App() {
     setHasResult(false);
   }, []);
 
-  const inputNumber = useCallback((num) => {
+  const inputNumber = useCallback((num: number) => {
+    if (waitingForOperand || hasResult) {
+      setWaitingForOperand(false);
+      setHasResult(false);
+      setDisplay(String(num));
+      return;
+    }
+
     setDisplay((current) => {
-      if (waitingForOperand || hasResult) {
-        setWaitingForOperand(false);
-        setHasResult(false);
-        return String(num);
-      }
       if (current.replace('-', '').replace('.', '').length >= 9) return current;
       return current === '0' ? String(num) : current + String(num);
     });
   }, [waitingForOperand, hasResult]);
 
   const inputDecimal = useCallback(() => {
+    if (waitingForOperand || hasResult) {
+      setWaitingForOperand(false);
+      setHasResult(false);
+      setDisplay('0.');
+      return;
+    }
+
     setDisplay((current) => {
-      if (waitingForOperand || hasResult) {
-        setWaitingForOperand(false);
-        setHasResult(false);
-        return '0.';
-      }
       return current.includes('.') ? current : `${current}.`;
     });
   }, [waitingForOperand, hasResult]);
 
-  const calculate = (a, b, op) => {
+  const calculate = (a: number, b: number, op: Operator) => {
     switch (op) {
       case '+': return a + b;
       case '-': return a - b;
@@ -59,10 +69,10 @@ export default function App() {
     }
   };
 
-  const chooseOperator = useCallback((op) => {
+  const chooseOperator = useCallback((op: Operator) => {
     const current = Number(display);
     if (!Number.isFinite(current)) return clear();
-    if (operator && !waitingForOperand) {
+    if (operator && storedValue !== null && !waitingForOperand) {
       const result = calculate(storedValue, current, operator);
       if (!Number.isFinite(result)) {
         setDisplay('Error');
@@ -95,7 +105,7 @@ export default function App() {
     setHasResult(true);
   }, [display, operator, storedValue, waitingForOperand]);
 
-  const unary = (kind) => {
+  const unary = (kind: UnaryOperation) => {
     const current = Number(display);
     let result = current;
     if (kind === 'sqrt') result = current < 0 ? NaN : Math.sqrt(current);
@@ -107,7 +117,7 @@ export default function App() {
     setHasResult(false);
   };
 
-  const memoryAction = (kind) => {
+  const memoryAction = (kind: MemoryAction) => {
     const current = Number(display);
     if (kind === 'MC') setMemory(0);
     if (kind === 'MR') {
@@ -121,7 +131,7 @@ export default function App() {
 
   // Keyboard events
   useEffect(() => {
-    const onKeyDown = (event) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       if (/^[0-9]$/.test(event.key)) inputNumber(Number(event.key));
       else if (event.key === '.') inputDecimal();
       else if (event.key === '+') chooseOperator('+');
@@ -143,7 +153,7 @@ export default function App() {
           <div className="inner">
             <div className="screen" aria-live="polite">{formatDisplay(display)}</div>
             <div className="btn-row">
-              {['MC', 'MR', 'M+', 'M-'].map((label) => (
+              {memoryActions.map((label) => (
                 <button className="green" key={label} onClick={() => memoryAction(label)}>{label}</button>
               ))}
               <button className="red" onClick={clear}>CE</button>
